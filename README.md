@@ -74,8 +74,8 @@ D --> E[서비스 배포]
 
 ```bash
 📁 저장소 구조
-├── backend/
-├── frontend/
+├── preprocessing/
+├── extract/
 ├── data/
 └── README.md
 ```

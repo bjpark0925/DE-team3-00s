@@ -49,7 +49,7 @@ D --> E[서비스 배포]
     <tr>
     <td> 팀원 소개 </td>
     	<td>
-        <img width="200" alt="정세종" src="[https://github.com/user-attachments/assets/fcf6247a-e517-4a47-9d0b-7492fc572865](https://github.com/user-attachments/assets/a09d2be5-0c3c-43a5-b895-f252d5839374)" />
+        <img width="200" alt="정세종" src="https://github.com/sejjong/DE-team3-00s/issues/1#issue-3297248160" />
       </td>
     	<td>
         <img width="200" alt="임채현" src="" />

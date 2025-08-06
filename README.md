@@ -38,10 +38,31 @@ D --> E[서비스 배포]
 
 ## 👨‍💻 팀원 소개
 
-| 팀원 | ![이름1](https://img.shields.io/badge/Github-username1-black?logo=github&style=flat-square) | ![이름2](https://img.shields.io/badge/Github-username2-black?logo=github&style=flat-square) | ![이름3](https://img.shields.io/badge/Github-username3-black?logo=github&style=flat-square) |
-|------|---|---|---|
-| 팀원 소개 | <img src="https://raw.githubusercontent.com/your-repo/img/member1.png" width="150"/> <br/> 검나 카리스마 있어 | <img src="https://raw.githubusercontent.com/your-repo/img/member2.png" width="150"/> <br/> 검나 카리스마 있어 | <img src="https://raw.githubusercontent.com/your-repo/img/member3.png" width="150"/> <br/> 검나 카리스마 있어 |
-| 역할 | Web Backend | Web Frontend | Web Fullstack (Lead) |
+<br/>
+
+<div align="center">
+<table>
+<th>팀원</th>
+    <th> 정세종 <a href="https://github.com/sejjong"><br/><img src="https://img.shields.io/badge/Github-181717?style=flat-square&logo=Github&logoColor=white"/><a></th>
+	  <th> 임채현 <a href="http://github.com/bkindtoevery1"><br/><img src="https://img.shields.io/badge/Github-181717?style=flat-square&logo=Github&logoColor=white"/></a></th>
+    <th> 박병준 <a href="https://github.com/bjpark0925"><br/><img src="https://img.shields.io/badge/Github-181717?style=flat-square&logo=Github&logoColor=white"/></a></th>
+    <tr>
+    <td> 팀원 소개 </td>
+    	<td>
+        <img width="200" alt="정세종" src="[https://github.com/user-attachments/assets/fcf6247a-e517-4a47-9d0b-7492fc572865](https://github.com/user-attachments/assets/a09d2be5-0c3c-43a5-b895-f252d5839374)" />
+      </td>
+    	<td>
+        <img width="200" alt="임채현" src="" />
+     </td>
+      <td>
+        <img width="200" alt="박병준" src="" />
+      </td>
+    </tr>
+  </table>
+</div>
+<br />
+<br />
+
 
 ---
 

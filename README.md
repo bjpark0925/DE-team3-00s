@@ -63,7 +63,7 @@
         <img width="200" alt="임채현" src="https://i.namu.wiki/i/05iTwXCQEzxWuzq2DJJcIO6Kz-EgzR8778fH3eDDvhI_g5lg8Wo57Rp_KefumgoL5fUe8mg-as5eUJ8uYaNSnw.webp" />
      </td>
       <td>
-        <img width="200" alt="박병준" src="https://private-user-images.githubusercontent.com/65696808/475629747-48382c0d-6da8-405f-957b-b6c375ebefda.jpg?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTQ2MTI2NzgsIm5iZiI6MTc1NDYxMjM3OCwicGF0aCI6Ii82NTY5NjgwOC80NzU2Mjk3NDctNDgzODJjMGQtNmRhOC00MDVmLTk1N2ItYjZjMzc1ZWJlZmRhLmpwZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA4MDglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwODA4VDAwMTkzOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPThiMzE1ZWI1ODMzYWQwYTliOWI3MmNjNGI3NTUxNjhmOWI0NjYwYzBhYmZiM2JjYjY5ODFlM2U1ZTBlZjVmNjgmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.dcvZgdnTPYStDvk9R9BfspSCGWmfnE1sl3iRsGHBshc" />
+        <img width="200" alt="박병준" src="https://github.com/user-attachments/assets/48382c0d-6da8-405f-957b-b6c375ebefda" />
       </td>
     </tr>
   </table>

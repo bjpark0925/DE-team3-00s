@@ -82,3 +82,5 @@
 ├── data/
 └── README.md
 ```
+
+<img width="800" alt="pipelining" src="https://github.com/user-attachments/assets/26b4851e-c41f-416f-9d60-ea13cad1a004" />

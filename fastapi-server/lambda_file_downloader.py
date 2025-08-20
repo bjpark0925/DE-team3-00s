@@ -1,5 +1,6 @@
 import subprocess
 import json
+import os
 
 import requests
 import boto3
@@ -43,6 +44,17 @@ def lambda_handler(event, context):
         return {
             'statusCode': 500,
             'body': f"Error uploading file to S3: {e}"
+        }
+
+    # check file size to upload normal files only
+    file_size = os.path.getsize(local_filename)
+
+    if file_size < 500:
+        error_message = f"File size ({file_size} bytes) is less than 500 bytes. Aborting upload."
+        send_slack_message(slack_webhook_url, error_message)
+        return {
+            'statusCode': 400,
+            'body': error_message
         }
 
     send_slack_message(slack_webhook_url, f"Successfully uploaded file: {filename}")

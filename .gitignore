@@ -1,0 +1,13 @@
+# 민감 정보 관련
+.env
+*.env
+.DS_Store
+# ec2-spark 관련
+spark-env.sh
+user-data.sh
+dockerfile
+docker-compose.yaml
+
+# pycache / 기타
+__pycache__/
+*.pyc

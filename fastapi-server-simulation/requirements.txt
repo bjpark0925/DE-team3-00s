@@ -1,0 +1,6 @@
+psycopg2
+pydantic
+fastapi
+boto3
+pandas
+geopandas

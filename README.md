@@ -136,3 +136,13 @@
 - ⏱ 기간: 2025.08.04 ~ 2025.08.30  
 - 🛠 기술 스택: Python, Docker, AWS Lambda, AWS S3, AWS EC2, Apache Spark, AWS RDS, AWS DynamoDB, Grafana
 
+```bash
+📁 저장소 구조
+├── ec2-grafana
+├── ec2-spark
+├── fastapi-server-simulation
+├── fastapi-server
+├── lambda-functions
+├── rds
+└── README.md
+```

@@ -5,6 +5,7 @@ import psycopg2
 
 import geopandas as gpd
 
+from zoneinfo import ZoneInfo
 from fastapi import FastAPI
 from datetime import datetime
 from pydantic import BaseModel
@@ -12,10 +13,6 @@ from shapely.geometry import Point
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
-
-# 택시존 SHP 파일 읽기
-zones = gpd.read_file('taxi_zones/taxi_zones.shp')
-zones = zones.to_crs(epsg=4326)
 
 
 # 택시 좌표 모델
@@ -29,6 +26,13 @@ class Coord(BaseModel):
 async def lifespan(app: FastAPI):
     # --- 서버 시작 시 실행될 코드 ---
     print("Initializing FastAPI server...")
+
+    # 택시존 SHP 파일 읽기
+    zones = gpd.read_file('taxi_zones/taxi_zones.shp')
+    zones = zones.to_crs(epsg=4326)
+
+    # NYC 시간대 설정
+    app.state.nyc_tz = ZoneInfo('America/New_York')
 
     # RDS에 연결 후 zone별 시간별 탑승 DB와 인접 Zone DB 로딩
     app.state.ride_count = defaultdict(int)
@@ -151,11 +155,12 @@ async def request_place(coord: Coord):
             temp_count = max(0, count - 1)
 
         # 모든 zone은 택시 1대가 추가되는 상황을 가정하고 점수 계산
-        hour = datetime.now().hour
+        hour = datetime.now(app.state.nyc_tz).hour
         score = app.state.ride_count.get((zone_id, hour), 0) / (temp_count + 1)
         if score > max_score:
             max_score, max_zone_id = score, zone_id
 
+    # 4. Dynamo DB에 업데이트 적용
     if next_zone_id and next_zone_id != max_zone_id:
         # 떠나는 zone의 count를 1 감소. count 속성이 존재할 때만 실행
         app.state.dynamo_client.update_item(
@@ -168,7 +173,17 @@ async def request_place(coord: Coord):
         )
 
     elif next_zone_id == max_zone_id:
-        # 연속 배차 요청이지만 이전 목적지와 동일한 경우
+        # 연속 배차 요청이지만 이전 목적지와 동일한 경우 dynamo db에 log만 작성
+        app.state.dynamo_client.update_item(
+            TableName='flag-dynamodb',
+            Key={'counter_type': {'S': 'dispatch'}},
+            UpdateExpression='SET #c = if_not_exists(#c, :zero) + :inc',
+            ExpressionAttributeNames={'#c': 'count'},
+            ExpressionAttributeValues={
+                ':inc': {'N': '1'},
+                ':zero': {'N': '0'}
+            }
+        )
         return max_zone_id
 
     # 다음 목적지로 가는 택시의 count를 1 증가
@@ -188,14 +203,15 @@ async def request_place(coord: Coord):
         ExpressionAttributeValues={':next_zone_id': {'N': str(max_zone_id)}}
     )
 
-    # dynamo db에 log 작성
-    app.state.dynamo_client.put_item(
-        TableName='log-dynamodb',
-        Item={
-            'taxi_id': {'N': str(coord.taxi_id)},
-            'timestamp': {'S': str(datetime.now())},
-            'flag': {'N': '0'},
-            'zone_id': {'N': str(current_zone_id)}
+    # dynamo db에 log 작성: flag-dyanmodb에 배차 count + 1
+    app.state.dynamo_client.update_item(
+        TableName='flag-dynamodb',
+        Key={'counter_type': {'S': 'dispatch'}},
+        UpdateExpression='SET #c = if_not_exists(#c, :zero) + :inc',
+        ExpressionAttributeNames={'#c': 'count'},
+        ExpressionAttributeValues={
+            ':inc': {'N': '1'},
+            ':zero': {'N': '0'}
         }
     )
 
@@ -204,40 +220,64 @@ async def request_place(coord: Coord):
 
 @app.post("/request_ride")
 async def request_ride(taxi_id: int):
-    # 1. Dynamo DB로부터 요청한 택시의 next_zone_id 확인
-    zone_id = app.state.dynamo_client.get_item(
-        TableName='zone-count-dynamodb',
+    # 1. 'taxi-destination-dynamodb'에서 해당 택시의 목적지 zone_id를 확인합니다.
+    destination_item = app.state.dynamo_client.get_item(
+        TableName='taxi-destination-dynamodb',
         Key={'taxi_id': {'N': str(taxi_id)}}
-    ).get('Item', {}).get('zone_id', {}).get('N')
+    ).get('Item', {})
 
-    if not zone_id:
-        return "Taxi ID doesn't exist"
+    zone_id_str = destination_item.get('next_zone_id', {}).get('N')
 
-    # 2. 그 zone_id의 count를 -1 이후 업데이트
-    count = app.state.dynamo_client.get_item(
-        TableName='zone-count-dynamodb',
-        Key={'zone_id': {'N': str(zone_id)}}
-    ).get('Item', {}).get('count', {}).get('N')
+    if not zone_id_str:
+        # 목적지가 없는 택시에 대한 예외 처리
+        return f"Destination for Taxi ID {taxi_id} doesn't exist"
 
-    count = int(count) - 1
+    # 2. UpdateExpression을 사용하여 'zone-count-dynamodb'의 count를 원자적으로 1 감소시킵니다.
+    #    이 방식은 경쟁 상태(Race Condition)를 방지합니다.
+    try:
+        app.state.dynamo_client.update_item(
+            TableName='zone-count-dynamodb',
+            Key={'zone_id': {'N': zone_id_str}},
+            # 'count' 속성에서 1을 뺀다. 단, count 속성이 존재하고 0보다 클 때만.
+            UpdateExpression='SET #c = #c - :dec',
+            ConditionExpression='attribute_exists(#c) AND #c > :zero',
+            ExpressionAttributeNames={'#c': 'count'}, # 'count'는 예약어이므로 별칭 #c 사용
+            ExpressionAttributeValues={
+                ':dec': {'N': '1'},
+                ':zero': {'N': '0'}
+            }
+        )
+    except Exception as e:
+        # ConditionExpression 실패 등 예외 처리 (예: count가 0이거나 없을 때)
+        print(f"Failed to decrement count for zone {zone_id_str}: {e}")
+        # 필요하다면 여기서 다른 비즈니스 로직을 처리할 수 있습니다.
+        # 예를 들어, count가 0이어서 감소에 실패했음을 클라이언트에 알릴 수 있습니다.
+        return f"Could not process ride for zone {zone_id_str}, count might be zero."
 
+
+    # 3. dynamo db에 pickup-zone 로그 작성
     app.state.dynamo_client.update_item(
-        TableName='zone-count-dynamodb',
-        Key={'zone_id': {'N': str(zone_id)}},
-        UpdateExpression='SET count = :val',
-        ExpressionAttributeValues={':val': {'N': str(count)}}
-    )
-
-    # dynamo db에 log 작성
-    app.state.dynamo_client.put_item(
-        TableName='log-dynamodb',
-        Item={
-            'taxi_id': {'N': str(taxi_id)},
-            'timestamp': {'S': str(datetime.now())},
-            'flag': {'N': '1'},
-            'zone_id': {'N': str(zone_id)}
+        TableName='pickup-zone-dynamodb',
+        Key={'pickup_zone_id': {'N': zone_id_str}},
+        UpdateExpression='SET #c = if_not_exists(#c, :zero) + :inc',
+        ExpressionAttributeNames={'#c': 'count'},
+        ExpressionAttributeValues={
+            ':inc': {'N': '1'},
+            ':zero': {'N': '0'}
         }
     )
 
-    # 3. 요청 성공 메시지 반환
+    # dynamo db에 log 작성: flag-dyanmodb에 배차 count + 1
+    app.state.dynamo_client.update_item(
+        TableName='flag-dynamodb',
+        Key={'counter_type': {'S': 'pickup'}},
+        UpdateExpression='SET #c = if_not_exists(#c, :zero) + :inc',
+        ExpressionAttributeNames={'#c': 'count'},
+        ExpressionAttributeValues={
+            ':inc': {'N': '1'},
+            ':zero': {'N': '0'}
+        }
+    )
+
+    # 4. 요청 성공 메시지 반환
     return "success"

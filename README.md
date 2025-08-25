@@ -79,7 +79,8 @@
 
 - 시각화
   Grafana
-  <img width="1891" height="921" alt="image" src="https://github.com/user-attachments/assets/56dfb7af-07dc-47de-8d6d-ef7b48da041b" />
+	<img width="3456" height="1978" alt="image" src="https://github.com/user-attachments/assets/6561fee5-c289-4183-afb2-7c437c7821ec" />
+ 	<img width="3456" height="1840" alt="image (1)" src="https://github.com/user-attachments/assets/85998310-2362-4669-a983-4d990ad1cd18" />
 
 - 알림 기능
 	1. AWS Lambda가 매달 업데이트되는 NYC TLC 데이터를 가져오기 위해, 매일 알림을 보내 NYC TLC 데이터가 업데이트 됐는지 확인한다.
@@ -134,7 +135,6 @@
 
 - ⏱ 기간: 2025.08.04 ~ 2025.08.30  
 - 🛠 기술 스택: Python, Docker, AWS Lambda, AWS S3, AWS EC2, Apache Spark, AWS RDS, AWS DynamoDB, Grafana
-- 🚀 배포 링크 :
 
 ```bash
 📁 저장소 구조

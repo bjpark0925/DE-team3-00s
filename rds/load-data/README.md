@@ -1,48 +1,83 @@
-## 테이블 2개에 대한 스키마 생성  
-- create_schema.sql 생성
-1. 예상 픽업 테이블
-2. 인접 존 테이블
+# 🛠️ NYC TLC Parquet → RDS 적재 및 스키마 생성
 
-## EC2(스키마 정의용)에서 parquet 생성 후 RDS에 데이터를 저장하고 확인하는 테스트 작업
-0. 사전 작업
-- EC2, RDS의 inbound, outbound 규칙 확인
-1. 의존성 설치
-2. 환경변수 설정 (비밀번호 하드코딩 방지)
-3. make_test_parquet.py 생성 후 실행
-4. load_parquet_to_rds.py 생성 후 실행
-5. RDS에서 적재된 데이터 확인
+## 📦 생성할 테이블
 
-## 고려한 부분
-- adjacent_zones (smallint[]): 배열 컬럼 → JDBC로 “바로 배열” 쓰기는 까다롭다. 배열은 java.sql.Array 로 처리해야 하는데, Spark의 일반적인 DataFrameWriter.jdbc() 경로는 파티션별 배치 insert에서 이 매핑을 자동으로 안전하게 해 주지 못하는 경우가 많기 때문이다.
+### 1. 예상 픽업 테이블  
+- 승객의 예상 탑승 수요 데이터 저장  
 
-- 성능 조절: reWriteBatchedInserts=true, 필요 시 batchsize/coalesce(파티션 개수 조절) 조정하여 성능을 조절할 수 있다.
+### 2. 인접 존 테이블  
+- 각 존에 인접한 존 리스트 저장 (배열 컬럼 포함)
+
+### ✅ 스키마 정의 파일
+- 파일명: `create_schema.sql`
+
 ---
-## 구현 과정
-### 로컬에서 EC2로 create_schema.sql 파일 전송
-```
-scp -i {pem키 경로} create_schema.sql ubuntu@{EC2 public domain}:~
+
+## 🧪 EC2에서 Parquet 생성 → RDS 적재 테스트
+
+### 0. 사전 준비  
+- EC2와 RDS의 **보안 그룹(inbound/outbound)** 규칙 확인
+
+### 1. 의존성 설치  
+필요한 패키지 설치 (예: `pandas`, `pyarrow`, `psycopg2`, `sqlalchemy` 등)
+
+### 2. 환경 변수 설정  
+- RDS 접속 정보 및 비밀번호는 **하드코딩하지 않고 환경 변수로 관리**
+
+### 3. 테스트용 Parquet 생성  
+- `make_test_parquet.py` 작성 및 실행
+
+### 4. Parquet → RDS로 적재  
+- `load_parquet_to_rds.py` 작성 및 실행
+
+### 5. 적재 데이터 확인  
+- RDS 접속 후 SQL로 데이터 정상 저장 여부 확인
+
+---
+
+## ⚠️ 고려 사항
+
+### 🧬 배열 컬럼 처리 이슈  
+- `adjacent_zones (smallint[])`: Spark JDBC를 통한 직접 적재는 까다로움  
+- `java.sql.Array`로 처리해야 하지만, `DataFrameWriter.jdbc()`의 기본 배치 insert에서는 자동 매핑이 잘 되지 않음
+
+### 🚀 성능 최적화 옵션  
+- `reWriteBatchedInserts=true` 설정  
+- 필요 시 `batchSize` 또는 `coalesce`로 파티션 개수 조절
+
+---
+
+## 🔧 구현 과정 요약
+
+### 1. 로컬에서 EC2로 스키마 파일 전송
+```bash
+scp -i {pem_파일_경로} create_schema.sql ubuntu@{EC2_public_DNS}:~
 ```
 
-### 로컬에서 ssh로 EC2에 접속
-```
-ssh -i {pem키 경로} ubuntu@{EC2 public domain}
+### 2. EC2 SSH 접속 및 스키마 파일 확인
+```bash
+ssh -i {pem_파일_경로} ubuntu@{EC2_public_DNS}
 ls -l create_schema.sql
 ```
 
-### EC2에서 RDS에 접속
-```
-psql -h {RDS endpoint} -U {user name} -d {db name} -p 5432
+### 3. EC2에서 RDS 접속
+```bash
+psql -h {RDS_endpoint} -U {user_name} -d {db_name} -p 5432
 ```
 
-#### RDS에서 썼던 명령어
-- 스키마 목록  
-\dn  
-- 특정 스키마만 보기  
-\dt nyc_tlc_data.*  
-- 스키마 통째로 삭제  
-DROP SCHEMA IF EXISTS nyc_tlc_data CASCADE;  
+### 4. RDS 내 유용한 psql 명령어
+```sql
+-- 스키마 목록 보기
+\dn
 
-## EC2에서 RDS에 접속 + create_schema.sql 바로 실행 명령어
+-- 특정 스키마 테이블 목록
+\dt nyc_tlc_data.*
+
+-- 스키마 삭제 (전체 테이블 포함)
+DROP SCHEMA IF EXISTS nyc_tlc_data CASCADE;
 ```
-psql -h {RDS endpoint} -U {user name} -d {db name} -p 5432 -f create_schema.sql
+
+### 5. EC2에서 RDS에 SQL 파일 실행
+```bash
+psql -h {RDS_endpoint} -U {user_name} -d {db_name} -p 5432 -f create_schema.sql
 ```

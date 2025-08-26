@@ -1,6 +1,8 @@
 import os
+import json
 import boto3
 import psycopg2
+import requests
 
 import pandas as pd
 import geopandas as gpd
@@ -78,6 +80,31 @@ async def lifespan(app: FastAPI):
     for row in cursor:
         zone_id, adjacent_zone = row
         app.state.adj_zones[zone_id] = adjacent_zone
+
+    # 들고 온 정보가 없으면 spark 서버 실행 후 다시 들고 오기
+    if not app.state.ride_count or not app.state.adj_zones:
+        cursor.close()
+        os.system("aws ec2 run-instances --launch-template LaunchTemplateName=spark-launch-template,Version=1")
+
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM expected_pickups")
+        for row in cursor:
+            zone_id, hour, average_pickup = row
+            app.state.ride_count[(zone_id, hour)] = average_pickup
+        cursor.execute("SELECT * FROM adjacent_zones")
+        for row in cursor:
+            zone_id, adjacent_zone = row
+            app.state.adj_zones[zone_id] = adjacent_zone
+
+        if not app.state.ride_count or not app.state.adj_zones:
+            requests.post("your-slack-webhook-url",
+                          headers = {'Content-Type': 'application/json'},
+                          data = json.dumps({
+                              'text': "Failed to load data from RDS. Please check the RDS and Spark instance."
+                          })
+            )
+            raise Exception("Failed to load data from RDS. Please check the RDS and Spark instance.")
+
     print("Connected to RDS database")
 
     # --- RDS 연결을 위한 클라이언트 생성 끝 ---

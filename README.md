@@ -99,7 +99,7 @@
 ## 🛠 ETL 파이프라인
 
 📌 [Miro ETL 다이어그램 보기](https://miro.com/app/board/uXjVJSgeANA=/)
-<img width="904" height="321" alt="파이프라인 drawio (2)" src="https://github.com/user-attachments/assets/88648f59-6abd-45e4-beb3-965ebb45b9d9" />
+<img width="904" height="321" alt="파이프라인 drawio (1)" src="https://github.com/user-attachments/assets/9e57fdc3-b2ff-4d00-9006-f738a03f06b9" />
 
 ---
 
